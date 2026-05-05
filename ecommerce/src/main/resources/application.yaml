@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: ecommerce-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/ecommercedb
+    username: user
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+server:
+  port: 8080
+  servlet:
+    context-path: /ecommerce-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  endpoint:
+    health:
+      show-details: always
