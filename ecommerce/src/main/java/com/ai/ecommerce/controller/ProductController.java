@@ -17,7 +17,24 @@ public class ProductController {
     public ProductController(ProductService svc) { this.svc = svc; }
 
     @GetMapping
-    public List<Product> all() { return svc.findAll(); }
+    public List<Product> all(
+            @RequestParam(required = false, value = "query") String query,
+            @RequestParam(required = false, value="name") String name,
+            @RequestParam(required = false, value = "max_price") Double maxPrice) {
+
+        List<Product> products = svc.findAll();
+
+        System.out.println("Filtering products with query='" + query + "', name='" + name + "', maxPrice=" + maxPrice);
+
+        List<Product> res = products.stream()
+                .filter(p -> query == null || p.getName().toLowerCase().contains(query.toLowerCase()) || p.getDescription().toLowerCase().contains(query.toLowerCase()))
+                .filter(p -> name == null || p.getName().toLowerCase().contains(name.toLowerCase()))
+                .filter(p -> maxPrice == null || p.getPrice().doubleValue() <= maxPrice)
+                .toList();
+
+        System.out.println("result : "+res);
+        return res;
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<Product> get(@PathVariable Long id) {

@@ -15,7 +15,7 @@ public class AiController {
     @Autowired
     private AiService aiService;
 
-    @Value("${spring.ai.python.url}")
+    //@Value("${spring.ai.python.url}")
     private String pythonServiceUrl;
 
     // RestTemplate is Spring's HTTP client for making REST calls
