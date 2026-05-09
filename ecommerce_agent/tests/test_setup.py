@@ -2,8 +2,7 @@ import os
 import sys
 
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
-
+from model import llm
 def test_setup():
 
     print("Testing AI provider connection...\n")
@@ -19,11 +18,7 @@ def test_setup():
         sys.exit(1)
 
     try:
-        model = ChatOpenAI(
-            model=ai_model,
-            base_url=ai_endpoint,
-            api_key=ai_api_key,
-        )
+        model = llm
         response = model.invoke("Say 'Setup successful!'")
 
         print(f"Model response: {response.content}")

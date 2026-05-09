@@ -15,6 +15,8 @@ public class CustomerOrder {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderId;
 
+    private String orderStatus;
+
     // foreign keys as simple Longs
     private Long customerId;
     private Long productId;

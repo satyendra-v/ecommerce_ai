@@ -11,3 +11,12 @@ python-dotenv>=1.2.1
 fastapi
 uvicorn[standard]
 requests
+
+
+langchain-chroma
+langchain-community
+python-multipart
+langchain-text-splitters
+unstructured
+pypdf
+docx2txt

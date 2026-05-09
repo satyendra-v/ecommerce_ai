@@ -1,4 +1,3 @@
-// src/main/java/com/ai/ecommerce/service/InventoryService.java
 package com.ai.ecommerce.service;
 
 import com.ai.ecommerce.entity.Inventory;
@@ -22,4 +21,8 @@ public class InventoryService {
         return repo.save(i);
     }
     public void delete(Long id) { repo.deleteById(id); }
+
+    public Inventory findByProductId(Long productId) {
+        return repo.findByProductId(productId);
+    }
 }

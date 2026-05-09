@@ -1,4 +1,3 @@
-// src/main/java/com/ai/ecommerce/controller/CustomerController.java
 package com.ai.ecommerce.controller;
 
 import com.ai.ecommerce.entity.Customer;
