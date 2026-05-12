@@ -22,4 +22,8 @@ public class ProductService {
         return repo.save(p);
     }
     public void delete(Long id) { repo.deleteById(id); }
+
+    public Product getProductByName(String productName) {
+        return repo.getProductByName(productName);
+    }
 }

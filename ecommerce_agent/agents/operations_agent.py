@@ -3,7 +3,7 @@ from langgraph.prebuilt import create_react_agent
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
 from model import llm
-from orchestration import AgentState
+from state import AgentState
 
 import os
 
@@ -21,20 +21,24 @@ async def initialize_ops_agent():
     global _mcp_client, _ops_agent
     try:
         _mcp_client = MultiServerMCPClient({
-            "ecommerce": {"url": "http://localhost:8080/sse", "transport": "sse"}
+            "ecommerce": {"url": os.getenv("MCP_SERVER_URL"), "transport": "sse"}
         })
+        # await _mcp_client.__aenter__()
         # Get tools without using context manager
         tools = await _mcp_client.get_tools()
+
+        tool_names = [tool.name for tool in tools]
+        print(f"Tools Available : {tool_names}")
 
         _ops_agent = create_react_agent(
             model=llm,
             tools=tools,
-            state_modifier=(
-                "You are an operations agent with access to order, inventory, and support tools. "
-                "Use the available tools to fulfill the user's request. "
-                "For refunds, always confirm the order exists first. "
-                "After completing an action, summarize what you did clearly."
-            )
+            # state_modifier=(
+            #     "You are an operations agent with access to order, inventory, and support tools. "
+            #     "Use the available tools to fulfill the user's request. "
+            #     "For refunds, always confirm the order exists first. "
+            #     "After completing an action, summarize what you did clearly."
+            # )
         )
         print("✓ Operations agent connected to MCP server")
     except Exception as e:
@@ -45,8 +49,9 @@ async def initialize_ops_agent():
 async def operations_node(state: AgentState) -> dict:
     """
     Operations agent: uses MCP tools to perform actions on the Spring Boot system.
-    Handles orders, refunds, tickets, inventory updates.
+    Handles orders, products, inventory updates.
     """
+    print("Operations agent: Calls particular tool using MCP")
     if _ops_agent is None:
         return {
             "messages": [AIMessage(
@@ -65,7 +70,21 @@ async def operations_node(state: AgentState) -> dict:
         if hasattr(m, "tool_calls") and m.tool_calls
     )
 
+    tool_name = ""
+    for message in result["messages"] :
+        if hasattr(message, "tool_calls") and message.tool_calls :
+            for tool_call in message.tool_calls :
+                tool_name = tool_name.join(tool_call["name"])
+
+    print(f"tool_name : {tool_name}")
+
+
+    print(f"operations agent: answer: {final_answer[:20]}")
+
     return {
         "messages": [AIMessage(content=final_answer, name="operations_agent")],
         "action_log": [{"node": "operations", "mcp_tool_calls": tool_calls}],
     }
+
+def test_operations_node(state: AgentState) :
+    print("INVOKED OPERATIONS NODE")

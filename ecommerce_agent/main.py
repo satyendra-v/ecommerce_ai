@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from contextlib import asynccontextmanager
 from langchain_core.messages import HumanMessage
 from agents.operations_agent import initialize_ops_agent
-from agents import compiled_graph
+from graph import compiled_graph
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -95,6 +95,7 @@ async def ingest(
     tags: str = Form(default="")
 ):
     # Write uploaded bytes to a temp file so loaders (PyPDFLoader etc.) can open it
+
     with tempfile.NamedTemporaryFile(
         delete=False,
         suffix=f".{file.filename.split('.')[-1]}"
@@ -104,6 +105,8 @@ async def ingest(
         tmp_path = tmp.name
 
     try:
+        print(f"Ingesting {tmp_path}")
+        print(f"Collecting {collection} with tags: {tags}")
         result = ingest_document(tmp_path, file.filename, collection, tags)
         return result
     finally:

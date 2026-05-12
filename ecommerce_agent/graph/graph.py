@@ -1,9 +1,13 @@
 from langgraph.graph import StateGraph, END
-from orchestration import AgentState
+from langgraph.checkpoint.memory import MemorySaver
+from state import AgentState
 from agents.supervisor import supervisor_node
 from agents.support_agent import support_node
 from agents.operations_agent import operations_node, initialize_ops_agent
 from agents.research_agent import research_node
+from agents import test_support_node, test_research_node, test_operations_node
+
+
 
 def build_graph():
     """
@@ -51,14 +55,13 @@ def build_graph():
     # The supervisor then decides: route again OR output FINISH.
     # This enables multi-turn agent collaboration:
     # supervisor → support → supervisor → operations → supervisor → FINISH
-    graph.add_edge("support", "supervisor")
-    graph.add_edge("operations", "supervisor")
-    graph.add_edge("research", "supervisor")
+    # graph.add_edge("support", "supervisor")
+    # graph.add_edge("operations", "supervisor")
+    # graph.add_edge("research", "supervisor")
 
     # ── COMPILE ───────────────────────────────────────────────────────────
     # compile() validates the graph structure and returns a runnable.
     # Use checkpointer for persistence across invocations.
-    from langgraph.checkpoint.memory import MemorySaver
     checkpointer = MemorySaver()
 
     return graph.compile(checkpointer=checkpointer)

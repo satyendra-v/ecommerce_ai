@@ -5,6 +5,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 import os
 from model import llm
+import time
 
 embeddings = OpenAIEmbeddings(
     model="text-embedding-3-small",
@@ -43,6 +44,7 @@ def format_docs_with_sources(docs) -> str:
         formatted.append(
             f"[{i}] Source: {source}, Page {page}\n{doc.page_content}"
         )
+    print("format_docs_with_sources :: Formatted documents with sources:")
     return "\n\n---\n\n".join(formatted)
 
 def query_rag(
@@ -51,15 +53,20 @@ def query_rag(
     top_k: int = 4,
     cite_sources: bool = True
 ) -> dict:
+
+    start_time = time.time()
     """
     Full RAG query pipeline: embed question → retrieve → generate answer.
     """
+    print(f"query_rag:: Querying {collection} with question: {question}")
+
     # 1. Load the vector store for this collection
     vectorstore = Chroma(
         collection_name=collection,
         embedding_function=embeddings,
         persist_directory="./chroma_db"
     )
+    print("query_rag :: Loaded vector store with collection:", collection)
 
     # 2. Create a retriever from the vector store.
     # The retriever's .invoke(query) method:
@@ -79,6 +86,8 @@ def query_rag(
     # 3. Retrieve relevant chunks (for returning to the user)
     retrieved_docs = retriever.invoke(question)
 
+    print(f"query_rag :: Retrieved {len(retrieved_docs)} documents")
+
     # 4. Build the RAG chain using LCEL
     # RunnablePassthrough passes the question through to the prompt unchanged.
     # The retriever is called with the question, formats the results, and inserts as context.
@@ -95,6 +104,9 @@ def query_rag(
     # 5. Generate the answer
     answer = rag_chain.invoke(question)
 
+    print(f"query_rag :: Generated answer......")
+
+
     # 6. Build response with source metadata
     sources = []
     if cite_sources:
@@ -104,6 +116,9 @@ def query_rag(
                 "page": doc.metadata.get("page", None),
                 "snippet": doc.page_content[:200] + "..."
             })
+    end_time = time.time()
+    total_time = "{:.3f}".format(end_time - start_time)
+    print(f"query_rag :: Retrieved in {total_time} seconds")
 
     return {
         "question": question,

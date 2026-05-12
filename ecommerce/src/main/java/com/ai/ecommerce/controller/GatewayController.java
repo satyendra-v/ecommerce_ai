@@ -1,7 +1,5 @@
 package com.ai.ecommerce.controller;
 
-import com.ai.ecommerce.ai.dto.ChatRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -19,9 +17,11 @@ public class GatewayController {
     @Value("${spring.ai.python.url:http://localhost:8000}")
     private String pythonUrl;
 
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate = new RestTemplate();
 
     private final ExecutorService executor = Executors.newCachedThreadPool();
+
+    public record ChatRequest(String sessionId, String message, String userId) {}
 
     // Standard Chat
     @PostMapping("/chat")

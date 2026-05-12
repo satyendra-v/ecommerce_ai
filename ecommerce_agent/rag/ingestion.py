@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from typing import List
+import time
 
 # ── DOCUMENT LOADERS ─────────────────────────────────────────────────────────
 # LangChain has loaders for virtually every format.
@@ -61,6 +62,7 @@ def load_document(file_path: str, file_type: str):
       - page_content: the raw text of that page/chunk
       - metadata: source file, page number, etc.
     """
+    print(f"load_document::: Loading Document {file_path} with file_type: {file_type}")
     loaders = {
         "pdf":  lambda: PyPDFLoader(file_path),
         "docx": lambda: Docx2txtLoader(file_path),
@@ -80,11 +82,14 @@ def ingest_document(
     collection: str = "default",
     tags: str = ""
 ) -> dict:
+
+    start_time = time.time()
     """
     Full ingestion pipeline: load → split → embed → store.
     Returns a summary of what was ingested.
     """
     # 1. Determine file type from extension
+    print(f"ingest_document::: Ingesting {file_path} with collection: {collection}")
     file_ext = Path(file_name).suffix.lstrip(".").lower()
 
     # 2. Load the document into LangChain Document objects
@@ -100,6 +105,7 @@ def ingest_document(
             "tags": tags,
             # page number is already set by PyPDFLoader
         })
+    print("Updated metadata for all documents with source_file, collection, and tags.")
 
     # 4. Split into chunks
     # split_documents handles the Document objects properly — it preserves metadata
@@ -115,6 +121,13 @@ def ingest_document(
         collection_name=collection,    # Namespace for logical separation
         persist_directory="./chroma_db"  # Directory where Chroma saves to disk
     )
+
+    print("Stored chunks in ChromaDB with collection name:", collection)
+
+    end_time = time.time()
+
+    total_time = end_time - start_time
+    print(f"Ingestion completed in {total_time} seconds.")
 
     return {
         "file_name": file_name,

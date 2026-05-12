@@ -2,7 +2,7 @@ from langchain_core.messages import SystemMessage
 from pydantic import BaseModel
 from typing import Literal
 from model import llm
-from orchestration import AgentState
+from state import AgentState
 
 # ── ROUTING SCHEMA ────────────────────────────────────────────────────────────
 # The supervisor's ONLY job is to read the user's message and decide
@@ -16,8 +16,8 @@ class RoutingDecision(BaseModel):
 SUPERVISOR_PROMPT = """You are a supervisor routing user requests to specialist agents.
 
 Available agents:
-- support: Handles customer questions, FAQs, product info, using knowledge base
-- operations: Handles orders, refunds, inventory, tickets — actions that modify data
+- support: Handles customer questions, FAQs, product info..etc using company knowledge base
+- operations: Handles orders, products, inventory — actions that modify data
 - research: Handles complex research, competitor analysis, market trends, needs web search
 - FINISH: The conversation is complete, all tasks are done
 
@@ -43,6 +43,9 @@ def supervisor_node(state: AgentState) -> dict:
         "routed_to": decision.next,
         "reasoning": decision.reasoning,
     }
+
+    print(f"supervisor_node: log_entry: {log_entry}")
+    print(f"supervisor_node: next node: {decision.next}")
 
     return {
         "next": decision.next,

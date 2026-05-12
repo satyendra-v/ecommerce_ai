@@ -8,15 +8,18 @@ langgraph>=0.0.1
 
 # Utilities
 python-dotenv>=1.2.1
-fastapi
-uvicorn[standard]
-requests
+fastapi~=0.136.1
+uvicorn[standard]~=0.46.0
+requests~=2.33.1
 
 
 langchain-chroma
-langchain-community
+langchain-community~=0.4.1
 python-multipart
-langchain-text-splitters
+langchain-text-splitters~=1.1.2
 unstructured
 pypdf
 docx2txt
+state~=0.1.1.dev0
+reportlab~=4.5.0
+pydantic~=2.13.3

@@ -15,8 +15,8 @@ spring:
       server:
         name: ecommerce-tools
         version: 1.0.0
-        description: A collection of tools for the e-commerce service
-        transport: sse
+        #description: A collection of tools for the e-commerce service
+        transport: SSE
         # SSE endpoint: AI clients connect to http://localhost:8080/sse
         # Tool calls come in via HTTP POST to http://localhost:8080/mcp/message
   web:
@@ -26,14 +26,5 @@ spring:
 
 server:
   port: 8080
-  servlet:
-    context-path: /ecommerce-service
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health, info, metrics
-  endpoint:
-    health:
-      show-details: always
+#  servlet:
+#    context-path: /ecommerce-service

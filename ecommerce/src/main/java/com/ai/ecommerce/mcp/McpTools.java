@@ -1,4 +1,4 @@
-package com.ai.ecommerce.tools;
+package com.ai.ecommerce.mcp;
 
 import com.ai.ecommerce.entity.CustomerOrder;
 import com.ai.ecommerce.entity.Inventory;
@@ -6,6 +6,8 @@ import com.ai.ecommerce.entity.Product;
 import com.ai.ecommerce.service.InventoryService;
 import com.ai.ecommerce.service.OrderService;
 import com.ai.ecommerce.service.ProductService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 public class McpTools {
 
@@ -26,14 +29,17 @@ public class McpTools {
     private InventoryService inventoryService;
 
     @Autowired
-    OrderService orderService;
+    private OrderService orderService;
 
     // Product Tools
-    @Tool(description = "Search products by query(keyword, type), name, or price range")
+    @Tool(description = """
+            Search the product catalog. Check this when a user asks information about products like price, description,
+            or wants to find specific products by name, type, or price range.
+            """)
     public List<Map<String, Object>> searchProducts(
-            @ToolParam(description = "Keyword to search") String query,
-            @ToolParam(description = "Product name with case insensitive") String name,
-            @ToolParam(description = "Max price in USD") Double maxPrice
+            @ToolParam(description = "Keyword to search(any name/ price/ date related to products, orders, inventory") String query,
+            @ToolParam(description = "Product name(ase insensitive) to search for", required = false) String name,
+            @ToolParam(description = "Max price in USD. defaults to none", required = false) Double maxPrice
     ) {
         List<Product> products = productService.findAll();
 
@@ -63,19 +69,53 @@ public class McpTools {
         return res;
     }
 
-    @Tool(description = "Get stock inventory for a product by its ID.")
+    @Tool(description = """
+    Get stock inventory for a product by its name which first looks up the product to get its ID and then finds inventory.
+    Or Get inventory for all products if product name is not provided by listing products names with help of product id from inventory.
+    Use when users ask about stock availability.""")
     public Map<String, Object> getInventory(
-            @ToolParam(description = "Product ID") Long productId
+            @ToolParam(description = "Product name with case insensitive", required = false) String productName,
+            @ToolParam(description = "quantity threshold to filter products with low stock, e.g. 5. If provided, returns products with inventory quantity less than or equal to this value.", required = false) Integer lowStockThreshold
     ) {
-        Inventory inventory = inventoryService.findByProductId(productId);
-        if (inventory == null) {
-            return Map.of("error", "Inventory not found for product ID " + productId);
+        if (StringUtils.isNoneBlank(productName)) {
+            Product product = productService.getProductByName(productName);
+            if(null == product) {
+                return Map.of("error", "Product not found for product Name " + productName);
+            }
+
+            Inventory inventory = inventoryService.findByProductId(product.getProductId());
+            if (inventory == null) {
+                return Map.of("error", "Inventory not found for product Name " + productName);
+            }
+
+            return Map.of(
+                    "inventoryId", inventory.getInventoryId(),
+                    "inventoryLocation", inventory.getLocation(),
+                    "productId", inventory.getProductId(),
+                    "quantity", inventory.getQuantity()
+            );
+        } else if (lowStockThreshold != null) {
+            List<Inventory> lowStockInventories = inventoryService.findAll().stream()
+                    .filter(inv -> inv.getQuantity() <= lowStockThreshold)
+                    .toList();
+
+            List<Map<String, Object>> lowStockProducts = lowStockInventories.stream()
+                    .map(inv -> {
+
+                        Map<String, Object> m = new HashMap<>();
+                        Product p = productService.findById(inv.getProductId()).orElse(null);
+                        String name = p != null ? p.getName() : "Unknown Product";
+                        m.put("productId", inv.getProductId());
+                        m.put("productName", name);
+                        m.put("quantity", inv.getQuantity());
+                        return m;
+                    }).toList();
+
+            return Map.of("lowStockProducts", lowStockProducts);
+        } else {
+            return Map.of("error", "Please provide either productName or lowStockThreshold to get inventory information.");
         }
-        return Map.of(
-                "inventoryId", inventory.getInventoryId(),
-                "productId", inventory.getProductId(),
-                "quantity", inventory.getQuantity()
-        );
+
     }
 
     // Order Tools

@@ -10,7 +10,7 @@ from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_JUSTIFY
 from reportlab.platypus import ListFlowable, ListItem
 from datetime import datetime
 
-OUTPUT_PATH = "./ecommerce_company_knowledge_base.pdf"
+OUTPUT_PATH = "ecommerce_company_knowledge_base.pdf"
 
 doc = SimpleDocTemplate(
     OUTPUT_PATH,

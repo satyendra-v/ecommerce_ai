@@ -8,7 +8,7 @@ from langchain_chroma import Chroma
 from langchain_community.chat_message_histories import ChatMessageHistory
 
 from model import llm
-from orchestration import AgentState
+from state import AgentState
 import os
 from dotenv import load_dotenv
 
@@ -26,7 +26,7 @@ embeddings = OpenAIEmbeddings(
 
 # 1. Load the vector store for this collection (or create it if it doesn't exist)
 vectorstore = Chroma(
-    collection_name="support-kb",
+    collection_name="company-docs",
     embedding_function=embeddings,
     persist_directory="./chroma_db"
 )
@@ -67,6 +67,7 @@ def support_node(state: AgentState) -> dict:
     Support agent: retrieves relevant KB articles and answers the user's question.
     Maintains per-session conversation memory.
     """
+    print("Support agent: retrieves relevant KB articles and answers the user's question.")
     # Extract the latest human message from state
     latest_message = next(
         (m.content for m in reversed(state["messages"])
@@ -96,8 +97,12 @@ def support_node(state: AgentState) -> dict:
         config={"configurable": {"session_id": state["session_id"]}}
     )
 
+    print(f"Support agent: answer: {answer[:20]}")
+
     return {
         "messages": [AIMessage(content=answer, name="support_agent")],
         "action_log": [{"node": "support", "kb_chunks_used": len(docs)}],
     }
 
+def test_support_node(state: AgentState) :
+    print("INVOKED SUPPORT NODE")

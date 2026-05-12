@@ -3,7 +3,7 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import AIMessage
 from pydantic import BaseModel, Field
-from orchestration import AgentState
+from state import AgentState
 from model import llm
 import os
 from dotenv import load_dotenv
@@ -99,3 +99,5 @@ async def research_node(state: AgentState) -> dict:
         "messages": [AIMessage(content=formatted, name="research_agent")],
         "action_log": [{"node": "research", "confidence": report.confidence}],
     }
+def test_research_node(state: AgentState) :
+    print("INVOKED RESEARCH NODE")
