@@ -29,7 +29,7 @@ public class RagController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         ResponseEntity<Map> response = restTemplate.exchange(
-            pythonServiceUrl + "/query",
+            pythonServiceUrl + "/rag/query",
             HttpMethod.POST,
             new HttpEntity<>(req, headers),
             Map.class

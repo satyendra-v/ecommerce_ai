@@ -1,34 +1,15 @@
+import time
+
 from langchain_chroma import Chroma
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
-import os
-from model import llm
-import time
 
-embeddings = OpenAIEmbeddings(
-    model="text-embedding-3-small",
-    api_key=os.getenv("AI_API_KEY"),
-    base_url=os.getenv("AI_ENDPOINT")
-)
+from app.utils.model import llm, embeddings
+from app.prompts import rag_prompt
 
-# ── RAG PROMPT ────────────────────────────────────────────────────────────────
-# This prompt is the core of RAG. It provides retrieved context to the model
-# and instructs it to answer ONLY from that context, not from its training data.
-# This prevents hallucination — the model cites actual document content.
-RAG_PROMPT = ChatPromptTemplate.from_template("""
-You are an assistant that answers questions based ONLY on the provided context.
-If the answer is not in the context, say "I don't have information about that in the documents."
-Do NOT make up information. Always cite which document your answer comes from.
 
-Context from documents:
-{context}
-
-Question: {question}
-
-Answer (with source citations):
-""")
+RAG_PROMPT = ChatPromptTemplate.from_template(rag_prompt)
 
 def format_docs_with_sources(docs) -> str:
     """
@@ -47,6 +28,29 @@ def format_docs_with_sources(docs) -> str:
     print("format_docs_with_sources :: Formatted documents with sources:")
     return "\n\n---\n\n".join(formatted)
 
+def get_retriever(collection : str = "company-docs", top_k : int = 3) :
+
+    # 1. Load the vector store for this collection (or create it if it doesn't exist)
+    vectorstore = Chroma(
+        collection_name=collection,
+        embedding_function=embeddings,
+        persist_directory="./chroma_db"
+    )
+    print("query_rag :: Loaded vector store with collection:", collection)
+
+    # 2. Create a retriever from the vector store.
+    retriever = vectorstore.as_retriever(
+        search_type="mmr",  # MMR = Maximal Marginal Relevance
+        # MMR balances relevance AND diversity. Without it, you might get 4 chunks
+        # from the same paragraph. MMR ensures retrieved chunks cover different aspects.
+        search_kwargs={
+            "k": top_k,  # Number of chunks to return
+            "fetch_k": top_k * 3  # Fetch 3x more candidates, then apply MMR re-ranking
+        }
+    )
+
+    return retriever
+
 def query_rag(
     question: str,
     collection: str = "default",
@@ -60,30 +64,13 @@ def query_rag(
     """
     print(f"query_rag:: Querying {collection} with question: {question}")
 
-    # 1. Load the vector store for this collection
-    vectorstore = Chroma(
-        collection_name=collection,
-        embedding_function=embeddings,
-        persist_directory="./chroma_db"
-    )
-    print("query_rag :: Loaded vector store with collection:", collection)
+    retriever = get_retriever(collection=collection, top_k=top_k)
 
-    # 2. Create a retriever from the vector store.
+    # 3. Retrieve relevant chunks (for returning to the user)
     # The retriever's .invoke(query) method:
     #   a. Embeds the query text into a vector
     #   b. Performs cosine similarity search
     #   c. Returns the top_k most similar document chunks
-    retriever = vectorstore.as_retriever(
-        search_type="mmr",  # MMR = Maximal Marginal Relevance
-        # MMR balances relevance AND diversity. Without it, you might get 4 chunks
-        # from the same paragraph. MMR ensures retrieved chunks cover different aspects.
-        search_kwargs={
-            "k": top_k,          # Number of chunks to return
-            "fetch_k": top_k * 3 # Fetch 3x more candidates, then apply MMR re-ranking
-        }
-    )
-
-    # 3. Retrieve relevant chunks (for returning to the user)
     retrieved_docs = retriever.invoke(question)
 
     print(f"query_rag :: Retrieved {len(retrieved_docs)} documents")

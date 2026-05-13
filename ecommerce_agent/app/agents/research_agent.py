@@ -1,10 +1,9 @@
-from langchain_openai import ChatOpenAI
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import AIMessage
 from pydantic import BaseModel, Field
-from state import AgentState
-from model import llm
+from app.state import AgentState
+from app.utils.model import llm
 import os
 from dotenv import load_dotenv
 

@@ -1,6 +1,4 @@
-import os
 from pathlib import Path
-from typing import List
 import time
 
 # ── DOCUMENT LOADERS ─────────────────────────────────────────────────────────
@@ -14,46 +12,16 @@ from langchain_community.document_loaders import (
     UnstructuredMarkdownLoader,  # Markdown files
 )
 
-# ── TEXT SPLITTER ─────────────────────────────────────────────────────────────
-# Why split? LLM context windows are limited. A 100-page PDF can't fit in a prompt.
-# We split into chunks of ~500 tokens. Each chunk is stored as a separate vector.
-# At query time we retrieve the most relevant chunks, not the whole document.
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-# RecursiveCharacterTextSplitter is the recommended default.
-# It tries to split on paragraph breaks first (\n\n), then sentences (\n),
-# then words. This preserves semantic coherence better than a naive character split.
+from app.utils.model import splitter, embeddings
 
-# ── EMBEDDINGS ────────────────────────────────────────────────────────────────
-# An embedding model converts text → a dense vector (array of floats).
-# Semantically similar text produces vectors that are geometrically close.
-# "dog" and "puppy" will be near each other; "dog" and "invoice" will be far apart.
-from langchain_openai import OpenAIEmbeddings
-# OpenAI's text-embedding-3-small produces 1536-dimensional vectors.
-# You can also use: HuggingFaceEmbeddings (free, local), CohereEmbeddings etc.
 
-# ── VECTOR STORE ──────────────────────────────────────────────────────────────
+from langchain_chroma import Chroma
 # A vector store is a database optimized for similarity search.
 # Given a query vector, it finds the k stored vectors with smallest cosine distance.
-from langchain_chroma import Chroma
 # Chroma: embedded, no-server, persists to disk. Great for development.
 # In production, switch to: langchain_postgres.PGVector (PostgreSQL + pgvector extension)
 
-embeddings = OpenAIEmbeddings(
-    model="text-embedding-3-small",
-    api_key=os.getenv("AI_API_KEY"),
-    base_url=os.getenv("AI_ENDPOINT")
-)
 
-splitter = RecursiveCharacterTextSplitter(
-    chunk_size=500,       # Maximum characters per chunk
-    chunk_overlap=50,     # Overlap between consecutive chunks.
-    # Overlap is crucial — without it, a sentence split across two chunks
-    # loses context. With overlap, both chunks contain the boundary sentence.
-    length_function=len,  # How to measure chunk size (character count here)
-    separators=["\n\n", "\n", " ", ""],
-    # Try splitting at paragraphs first, then lines, then words, then chars.
-    # This ordering preserves the most semantic structure.
-)
 
 def load_document(file_path: str, file_type: str):
     """

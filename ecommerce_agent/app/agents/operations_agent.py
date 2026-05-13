@@ -1,11 +1,11 @@
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+import os
+
+from langchain_core.messages import AIMessage
 from langgraph.prebuilt import create_react_agent
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
-from model import llm
-from state import AgentState
-
-import os
+from app.utils.model import llm
+from app.state import AgentState
 
 _mcp_client = None
 _ops_agent = None
@@ -20,9 +20,11 @@ async def initialize_ops_agent():
     """
     global _mcp_client, _ops_agent
     try:
-        _mcp_client = MultiServerMCPClient({
-            "ecommerce": {"url": os.getenv("MCP_SERVER_URL"), "transport": "sse"}
-        })
+        _mcp_client = MultiServerMCPClient(
+            {
+                "ecommerce": {"url": os.getenv("MCP_SERVER_URL"), "transport": "sse"}
+            }
+        )
         # await _mcp_client.__aenter__()
         # Get tools without using context manager
         tools = await _mcp_client.get_tools()

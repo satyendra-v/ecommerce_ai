@@ -1,8 +1,10 @@
 from langchain_core.messages import SystemMessage
 from pydantic import BaseModel
 from typing import Literal
-from model import llm
-from state import AgentState
+
+from app.utils.model import llm
+from app.state import AgentState
+from app.prompts import supervisor_prompt
 
 # ── ROUTING SCHEMA ────────────────────────────────────────────────────────────
 # The supervisor's ONLY job is to read the user's message and decide
@@ -13,18 +15,6 @@ class RoutingDecision(BaseModel):
     next: Literal["support", "operations", "research", "FINISH"]
     reasoning: str  # Why this route was chosen (for observability)
 
-SUPERVISOR_PROMPT = """You are a supervisor routing user requests to specialist agents.
-
-Available agents:
-- support: Handles customer questions, FAQs, product info..etc using company knowledge base
-- operations: Handles orders, products, inventory — actions that modify data
-- research: Handles complex research, competitor analysis, market trends, needs web search
-- FINISH: The conversation is complete, all tasks are done
-
-Analyze the latest user message and route to the most appropriate agent.
-If the previous agent has answered fully, route to FINISH.
-"""
-
 # Bind the routing schema — supervisor MUST output a valid RoutingDecision
 supervisor_llm = llm.with_structured_output(RoutingDecision)
 
@@ -33,7 +23,7 @@ def supervisor_node(state: AgentState) -> dict:
     The supervisor node. Reads the full message history and decides next agent.
     Returns a partial state update — only the fields that changed.
     """
-    messages = [SystemMessage(content=SUPERVISOR_PROMPT)] + state["messages"]
+    messages = [SystemMessage(content=supervisor_prompt)] + state["messages"]
 
     decision: RoutingDecision = supervisor_llm.invoke(messages)
 

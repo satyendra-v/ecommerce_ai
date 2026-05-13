@@ -1,10 +1,12 @@
 import os
 import sys
-
 from dotenv import load_dotenv
-from model import llm
-def test_setup():
 
+from app.utils.model import llm
+
+def test_llm() -> dict[str, str]:
+
+    llm_response = {}
     print("Testing AI provider connection...\n")
     load_dotenv()
 
@@ -25,9 +27,15 @@ def test_setup():
         print(f"Model : {ai_model}")
         print(f"Endpoint : {ai_endpoint}")
         print("Setup successful!")
+
+        llm_response["Model Response"] = response.content
+        llm_response["Model"] = ai_model
+        llm_response["Endpoint"] = ai_endpoint
+
     except Exception as error:
         print(f" ERROR : {str(error)}")
+    return llm_response
 
 
 if __name__ == "__main__" :
-    test_setup()
+    test_llm()

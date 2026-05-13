@@ -32,7 +32,7 @@ public class GatewayController {
         HttpEntity<ChatRequest> httpEntity = new HttpEntity<>(req, headers);
 
         ResponseEntity<Map> response = restTemplate.exchange(
-                pythonUrl + "/chat",
+                pythonUrl + "/chat/",
                 HttpMethod.POST,
                 httpEntity,
                 Map.class

@@ -48,7 +48,7 @@ public class DocumentController {
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         ResponseEntity<String> response = restTemplate.exchange(
-                pythonServiceUrl + "/ingest",
+                pythonServiceUrl + "/rag/ingest",
                 HttpMethod.POST,
                 new HttpEntity<>(body, headers),
                 String.class

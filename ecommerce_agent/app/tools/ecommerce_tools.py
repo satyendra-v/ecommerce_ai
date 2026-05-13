@@ -1,6 +1,8 @@
 import os
 from dotenv import load_dotenv
 import requests
+from langchain_core.tools import BaseTool
+from pydantic import BaseModel, Field
 
 from langchain.tools import tool
 
@@ -33,7 +35,7 @@ def search_products(query: str, name: str = "", max_price: float = None) -> str:
     if name:
         params["name"] = name
 
-    response = requests.get(f"{ecommerce_be_service}/products", params=params)
+    response = requests.get(f"{ecommerce_be_service}/api/products", params=params)
 
     print(f"API URL: {response.url}")
     print(f"Response status: {response.status_code}")
@@ -54,3 +56,45 @@ def search_products(query: str, name: str = "", max_price: float = None) -> str:
         lines.append(f"  - ID:{p['productId']} | {p['name']} | ${p['price']} | {p.get('sku', 'N/A')}")
 
     return "\n".join(lines)
+
+
+class CalculatorInput(BaseModel):
+    """Input for calculator."""
+
+    expression: str = Field(description="Math expression to evaluate")
+
+@tool(args_schema=CalculatorInput)
+def calculator(expression: str) -> str:
+    """Perform mathematical calculations."""
+    try:
+        result = eval(expression, {"__builtins__": {}}, {})
+        return str(result)
+    except Exception as e:
+        return f"Error: {e}"
+
+
+
+class SearchInput(BaseModel):
+    """Input for search."""
+
+    query: str = Field(description="Search query")
+
+@tool(args_schema=SearchInput)
+def search_information(query: str) -> str:
+    """Search for factual information.Use this tool when user asked any information"""
+    results = {
+        "Capital of France" : "Paris",
+        "Virat Kohli Centuries" : "85",
+        "king of the cricket" : "Virat Kohli"
+    }
+    print("search_information invoked")
+    return results.get(query.lower(), "No results found")
+
+def get_tools() -> list[BaseTool]:
+    return [search_products, search_information, calculator]
+
+tools = {
+    "calculator" : calculator,
+    "search_products" : search_products,
+    "search_information": search_information
+}

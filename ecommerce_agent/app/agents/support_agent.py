@@ -2,54 +2,37 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableWithMessageHistory
-from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
-
 from langchain_community.chat_message_histories import ChatMessageHistory
 
-from model import llm
-from state import AgentState
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-# With RAG
+from app.utils.model import llm, embeddings
+from app.state import AgentState
+from app.prompts import support_agent_prompt
 
 
-# ── VECTOR STORE ──────────────────────────────────────────────────────────────
-embeddings = OpenAIEmbeddings(
-    model="text-embedding-3-small",
-    api_key=os.getenv("AI_API_KEY"),
-    base_url=os.getenv("AI_ENDPOINT")
-)
+def get_retriever(collection : str = "company-docs") :
 
-# 1. Load the vector store for this collection (or create it if it doesn't exist)
-vectorstore = Chroma(
-    collection_name="company-docs",
-    embedding_function=embeddings,
-    persist_directory="./chroma_db"
-)
+    # 1. Load the vector store for this collection (or create it if it doesn't exist)
+    vectorstore = Chroma(
+        collection_name=collection,
+        embedding_function=embeddings,
+        persist_directory="./chroma_db"
+    )
 
-# 2. Create a retriever from the vector store.
-retriever = vectorstore.as_retriever(
-    # MMR(Maximal Marginal Relevance) is a search strategy that balances relevance and diversity in the search results.
-    # MMR ensures retrieved chunks cover different aspects.
-    # It helps to retrieve results that are not only relevant to the query but also diverse from each other, which can be particularly useful in scenarios like knowledge retrieval where you want a variety of information.
-    search_type="mmr",
-    search_kwargs={"k": 3, "fetch_k": 9} # Fetching 3x more to apply MMR re-ranking
-)
+    # 2. Create a retriever from the vector store.
+    retriever = vectorstore.as_retriever(
+        # MMR(Maximal Marginal Relevance) is a search strategy that balances relevance and diversity in the search results.
+        # MMR ensures retrieved chunks cover different aspects.
+        # It helps to retrieve results that are not only relevant to the query but also diverse from each other, which can be particularly useful in scenarios like knowledge retrieval where you want a variety of information.
+        search_type="mmr",
+        search_kwargs={"k": 3, "fetch_k": 9}  # Fetching 3x more to apply MMR re-ranking
+    )
 
-# ── SUPPORT AGENT PROMPT ──────────────────────────────────────────────────────
+    return retriever
+
+# -------- Support Prompt --------
 SUPPORT_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", """You are a friendly customer support agent for an e-commerce company.
-Answer questions using the retrieved knowledge base context below.
-If the answer isn't in the context, say so honestly — don't make things up.
-If the customer has an issue requiring a refund or ticket, let them know the operations agent will handle it.
-
-Knowledge Base Context:
-{context}
-"""),
+    ("system", support_agent_prompt),
     MessagesPlaceholder(variable_name="history"),  # Injects conversation history
     ("human", "{question}"),
 ])
@@ -76,7 +59,9 @@ def support_node(state: AgentState) -> dict:
     )
 
     # 1. Retrieve relevant knowledge base chunks
+    retriever = get_retriever()
     docs = retriever.invoke(latest_message)
+
     context = "\n\n---\n\n".join(
         f"[Source: {d.metadata.get('source', 'KB')}]\n{d.page_content}"
         for d in docs
