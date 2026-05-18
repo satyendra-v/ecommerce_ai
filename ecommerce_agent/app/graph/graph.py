@@ -16,9 +16,8 @@ def build_graph():
       - Terminal condition: supervisor outputs FINISH
     """
 
-    # StateGraph is LangGraph's core primitive.
-    # It defines a directed graph where nodes are Python functions and
-    # edges define the allowed transitions between them.
+    # StateGraph is LangGraph's core primitive. It defines a directed graph where nodes -> Python functions and
+    # edges -> define the allowed transitions between them.
     graph = StateGraph(AgentState)
 
     # ── ADD NODES ─────────────────────────────────────────────────────────

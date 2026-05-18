@@ -1,0 +1,11 @@
+.venv/
+.env
+.gitignore
+.git/
+app/utils/pdf
+node_modules/
+tar
+__pycache__
+*.pyc
+*.pyo
+*.pyd

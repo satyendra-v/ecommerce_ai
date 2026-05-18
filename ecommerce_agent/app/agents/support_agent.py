@@ -10,7 +10,7 @@ from app.state import AgentState
 from app.prompts import support_agent_prompt
 
 
-def get_retriever(collection : str = "company-docs") :
+def get_retriever(collection : str = "") :
 
     # 1. Load the vector store for this collection (or create it if it doesn't exist)
     vectorstore = Chroma(
@@ -59,7 +59,7 @@ def support_node(state: AgentState) -> dict:
     )
 
     # 1. Retrieve relevant knowledge base chunks
-    retriever = get_retriever()
+    retriever = get_retriever(state["collection"])
     docs = retriever.invoke(latest_message)
 
     context = "\n\n---\n\n".join(

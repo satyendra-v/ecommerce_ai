@@ -6,23 +6,39 @@ A sophisticated AI agent that uses **ReAct**, **Function Calling**, **RAG**, and
 
 ```
 ecommerce_agent/
-├── agent/
-│   ├── __init__.py              # Agent module exports
-│   └── agent.py                 # ReAct agent with LLM, tools, and RAG
-├── tools/
+├── api/
+│   ├── routes/
+│       ├── __init__.py         
+│       └── chat.py             # Chat API multi-agent
+│       └── health.py           # Health API
+│       └── rag.py              # RAG ingestion and retrieval API
+│       └── tools.py            # Basic tool calls with langchain
+├── state/
+│   ├── __init__.py             
+│   └── state.py                # Maintain agent state at every node call
+├── graph/
+│   ├── __init__.py             
+│   └── graph.py                # Build Directed graph and compile
+├── agents/
+│   ├── __init__.py             
+│   └── supervisor.py           # Handles routing decision using LLM
+│   └── operations_agent.py     # ReAct agent with MCP tools(Spring boot backend)
+│   └── support_agent.py        # ReAct agent with RAG query on KB
+│   └── research_agent.py       # ReAct agent with Web search on any factual and realtime information
+├── utils/
 │   ├── __init__.py
-│   └── ecommerce_tools.py       # LangChain tools for Spring Boot API calls
+│   └── model.py                # Predefined LLM, Embedding utilized all over the app
 ├── prompts/
-│   └── system_prompt.txt        # Agent system instructions
-├── data/
 │   ├── __init__.py
-│   └── rag_setup.py             # Vector store creation script
-├── integrations/
-│   └── mcp_adapter.py           # MCP server integration (optional)
-├── main.py                       # Entry point
-├── requirements.txt              # Python dependencies
-├── .env                          # Environment variables
-└── README.md                     # This file
+│   └── prompts.py              # Agent system, support, LLM instructions
+├── rag/
+│   ├── __init__.py
+│   └── ingestion.py            # KB ingestion to RAG
+│   └── retrieval.py            # Search from RAG
+├── main.py                     # Entry point runs FastAPI and includes routers
+├── requirements.txt            # Python dependencies
+├── .env                        # Environment variables
+└── README.md                   # This file
 ```
 
 ## Key Components

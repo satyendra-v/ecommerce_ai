@@ -21,3 +21,4 @@ class AgentState(TypedDict):
     next: Literal["support", "operations", "research", "FINISH"]
     session_id: str
     action_log: Annotated[list[dict], operator.add]
+    collection: str

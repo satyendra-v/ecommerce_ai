@@ -11,6 +11,7 @@ class ChatRequest(BaseModel):
     sessionId: str
     message: str
     userId: str = "anonymous"
+    collection: str = ""
 
 @router.post("/")
 async def chat(req: ChatRequest):
@@ -24,6 +25,7 @@ async def chat(req: ChatRequest):
             "messages": [HumanMessage(content=req.message)],
             "session_id": req.sessionId,
             "action_log": [],
+            "collection" : req.collection,
         },
         config={"configurable": {"thread_id": req.sessionId}}
     )

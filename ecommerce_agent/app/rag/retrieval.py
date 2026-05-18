@@ -5,6 +5,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
+from chromadb import PersistentClient
+
 from app.utils.model import llm, embeddings
 from app.prompts import rag_prompt
 
@@ -113,3 +115,35 @@ def query_rag(
         "sources": sources,
         "chunks_retrieved": len(retrieved_docs)
     }
+
+def retrieve_documents(collection_name: str = "company-docs") :
+
+    print("retrieve_documents....")
+    store = Chroma(
+        collection_name=collection_name,
+        embedding_function=embeddings,
+        persist_directory="./chroma_db"
+    )
+    # chrome_client = PersistentClient(path="./chroma_db")
+    # try :
+    #     collections = chrome_client.list_collections()
+    #     collection_list = [c.name for c in collections]
+    #     print(f"Collections available : {collection_list}")
+    #     collection = chrome_client.get_collection(name=collection_name, embedding_function=embeddings)
+    #
+    # except Exception as e :
+    #     return {
+    #         "status": "error",
+    #         "message": f"Collection '{collection_name}' not found"
+    #     }
+
+    # Get all stored metadata
+    data = store.get()
+    seen = set()
+    files = []
+    for meta in data["metadatas"]:
+        src = meta.get("source_file", "unknown")
+        if src not in seen:
+            seen.add(src)
+            files.append({"file": src, "collection": collection})
+    return {"documents": files, "total_chunks": len(data["ids"])}

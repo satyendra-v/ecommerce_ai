@@ -4,22 +4,29 @@ langchain-core>=1.1.0
 langchain>=1.1.0
 langchain-azure-ai>=1.0.4
 langchain-mcp-adapters>=0.1.14
-langgraph>=0.0.1
-
-# Utilities
-python-dotenv>=1.2.1
-fastapi~=0.136.1
-uvicorn[standard]~=0.46.0
-requests~=2.33.1
-
-
 langchain-chroma
 langchain-community~=0.4.1
-python-multipart
 langchain-text-splitters~=1.1.2
-unstructured
+
+chromadb~=1.5.9
+
+# LangGraph packages
+langgraph>=0.0.1
+state~=0.1.1.dev0
+
+# API
+fastapi~=0.136.1
+uvicorn~=0.46.0
+
+# Utils
+python-dotenv>=1.2.1
+requests~=2.33.1
+python-multipart
+
+
+# Document processing
 pypdf
 docx2txt
-state~=0.1.1.dev0
-reportlab~=4.5.0
+# reportlab~=4.5.0
+
 pydantic~=2.13.3

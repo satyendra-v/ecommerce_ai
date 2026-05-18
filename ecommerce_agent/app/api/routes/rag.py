@@ -3,10 +3,8 @@ import tempfile
 import os
 from pydantic import BaseModel
 
-from langchain_chroma import Chroma
-
 from app.rag.ingestion import ingest_document, embeddings
-from app.rag.retrieval import query_rag
+from app.rag.retrieval import query_rag, retrieve_documents
 
 
 router = APIRouter(prefix="/rag")
@@ -54,20 +52,5 @@ async def query(req: QueryRequest):
 
 # --------- List of Documents endpoint ---------
 @router.get("/documents")
-async def list_docs(collection: str = "default"):
-
-    store = Chroma(
-        collection_name=collection,
-        embedding_function=embeddings,
-        persist_directory="././chroma_db"
-    )
-    # Get all stored metadata
-    data = store.get()
-    seen = set()
-    files = []
-    for meta in data["metadatas"]:
-        src = meta.get("source_file", "unknown")
-        if src not in seen:
-            seen.add(src)
-            files.append({"file": src, "collection": collection})
-    return {"documents": files, "total_chunks": len(data["ids"])}
+async def list_docs():
+    return retrieve_documents()
