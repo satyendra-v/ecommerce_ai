@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: ecommerce-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/ecommercedb
+    username: user
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  ai:
+    mcp:
+      server:
+        name: ecommerce-tools
+        version: 1.0.0
+        #description: A collection of tools for the e-commerce service
+        transport: SSE
+        # SSE endpoint: AI clients connect to http://localhost:8080/sse
+        # Tool calls come in via HTTP POST to http://localhost:8080/mcp/message
+  web:
+    resources:
+      add-mappings: false # Disable default static resource handling
+      # CORS — allow Python/Claude Desktop to connect from any origin
+
+server:
+  port: 8080
+#  servlet:
+#    context-path: /ecommerce-service
